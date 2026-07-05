@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BASF Wiki Assistant</title>
+<link rel="icon" type="image/png" href="https://www.algomojo.com/img/robot.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<style>
+/* ============================================================
+   1. VARIABLES — design tokens (DARK, default)
+   ============================================================ */
+:root, [data-theme="dark"]{
+  /* surfaces */
+  --bg:            #090909;
+  --surface:       #111111;
+  --card:          #171717;
+  --card-hover:    #1c1c1c;
+  --border:        rgba(255,255,255,.08);
+  --border-strong: rgba(255,255,255,.14);
+
+  /* text */
+  --text-primary:   #FFFFFF;
+  --text-secondary: #A1A1AA;
+  --text-muted:     #71717A;
+  --text-on-accent: #FFFFFF;
+
+  /* accent — BASF AP GREEN. The only accent color, used sparingly. */
+  --accent:        #43B02A;
+  --accent-strong: #2E7D1F;
+  --accent-text:   #6FD44F;   /* accessible on dark bg — links, icons, focus */
+  --accent-soft:   rgba(67,176,42,.16);
+  --accent-border: rgba(111,212,79,.35);
+
+  /* functional status colors */
+  --success:      #2E9B5D;
+  --success-soft: rgba(46,155,93,.12);
+  --danger:       #C4453B;
+  --danger-soft:  rgba(196,69,59,.12);
+  --source-label: #C98A2E;
+
+  /* radius */
+  --radius-card:         14px;
+  --radius-button:       12px;
+  --radius-input:        16px;
+  --radius-sidebar-item: 10px;
+  --radius-pill:         999px;
+
+  /* elevation */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.25);
+  --shadow-md: 0 4px 18px rgba(0,0,0,.25);
+  --shadow-lg: 0 10px 34px rgba(0,0,0,.35);
+
+  /* spacing — 8pt */
+  --space-1: 4px; --space-2: 8px; --space-3: 16px; --space-4: 24px;
+  --space-5: 32px; --space-6: 40px; --space-7: 48px; --space-8: 64px;
+
+  /* typography */
+  --font-sans: 'Inter','IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono: 'SFMono-Regular','Cascadia Code',Consolas,monospace;
+  --text-h1: 36px; --text-h2: 28px; --text-h3: 22px;
+  --text-body: 15px; --text-small: 13px; --leading: 1.6;
+
+  /* motion */
+  --dur-hover: 100ms; --dur-press: 80ms; --dur-card: 120ms; --dur-fade: 200ms;
+  --ease: cubic-bezier(.4,0,.2,1);
+
+  /* layout */
+  --content-max: 820px; --sidebar-width: 268px; --header-height: 56px;
+}
+
+/* LIGHT theme overrides */
+[data-theme="light"]{
+  --bg:            #F7F7F5;
+  --surface:       #FFFFFF;
+  --card:          #F1F1EE;
+  --card-hover:    #E9E9E6;
+  --border:        rgba(0,0,0,.08);
+  --border-strong: rgba(0,0,0,.14);
+
+  --text-primary:   #0B0B0B;
+  --text-secondary: #454548;
+  --text-muted:     #6B6B70;
+  --text-on-accent: #FFFFFF;
+
+  --accent:        #2E7D1F;
+  --accent-strong: #1F5A15;
+  --accent-text:   #2E7D1F;
+  --accent-soft:   rgba(46,125,31,.12);
+  --accent-border: rgba(46,125,31,.35);
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 14px rgba(0,0,0,.08);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,.12);
+}
+
+/* ============================================================
+   2. RESET
+   ============================================================ */
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+html{ height:100%; }
+body{
+  height:100vh; overflow:hidden;
+  display:flex; flex-direction:column;
+  background:var(--bg); color:var(--text-primary);
+  font-family:var(--font-sans);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  transition:background var(--dur-fade) var(--ease), color var(--dur-fade) var(--ease);
+}
+button{ font-family:inherit; }
+img{ max-width:100%; display:block; }
+::-webkit-scrollbar{ width:6px; height:6px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{ background:var(--border-strong); border-radius:var(--radius-pill); }
+::-webkit-scrollbar-thumb:hover{ background:var(--accent-border); }
+
+/* ============================================================
+   3. TYPOGRAPHY
+   ============================================================ */
+body{ font-size:var(--text-body); line-height:var(--leading); }
+h1,h2,h3{ font-weight:700; letter-spacing:-.01em; color:var(--text-primary); }
+h1{ font-size:var(--text-h1); }
+h2{ font-size:var(--text-h2); }
+h3{ font-size:var(--text-h3); font-weight:600; }
+p{ color:var(--text-secondary); }
+.text-small{ font-size:var(--text-small); }
+kbd{
+  font-family:var(--font-sans); font-size:11px; color:var(--text-secondary);
+  background:var(--card); border:1px solid var(--border);
+  border-radius:5px; padding:1px 6px;
+}
+
+/* ============================================================
+   4. LAYOUT
+   ============================================================ */
+.skip-link{
+  position:absolute; left:var(--space-3); top:-48px;
+  background:var(--accent); color:#fff; padding:10px 16px;
+  border-radius:var(--radius-button); z-index:1000;
+  transition:top var(--dur-fade) var(--ease);
+}
+.skip-link:focus{ top:var(--space-3); }
+
+.app-shell{ flex:1; min-height:0; display:flex; overflow:hidden; }
+.content-area{ flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
+
+.chat-wrapper{
+  flex:1; min-height:0; overflow-y:auto;
+  padding:var(--space-6) var(--space-4) var(--space-3);
+  scroll-behavior:smooth;
+}
+#chat-box{
+  display:flex; flex-direction:column; gap:var(--space-4);
+  max-width:var(--content-max); width:100%; margin:0 auto;
+}
+
+/* ============================================================
+   5. SIDEBAR
+   ============================================================ */
+.sidebar{
+  width:var(--sidebar-width); flex-shrink:0;
+  background:var(--surface); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; overflow:hidden;
+  transition:transform var(--dur-fade) var(--ease), background var(--dur-fade) var(--ease);
+}
+.sidebar-top{ padding:var(--space-3); border-bottom:1px solid var(--border); flex-shrink:0; }
+.new-chat-btn{
+  width:100%; display:flex; align-items:center; justify-content:center; gap:var(--space-2);
+  background:#0B0B0B; color:#fff; border:1px solid var(--border-strong);
+  border-radius:var(--radius-button); font-size:var(--text-small); font-weight:600;
+  padding:10px 14px; cursor:pointer;
+  transition:background var(--dur-hover) var(--ease), transform var(--dur-press) var(--ease);
+}
+[data-theme="light"] .new-chat-btn{ background:#111; border-color:#111; }
+.new-chat-btn:hover{ background:#000; }
+.new-chat-btn:active{ transform:translateY(1px); }
+.new-chat-btn svg{ width:16px; height:16px; flex-shrink:0; }
+
+.sidebar-search{ margin-top:var(--space-3); }
+.sidebar-search-box{
+  display:flex; align-items:center; gap:var(--space-2);
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-button); padding:8px 12px;
+  transition:border-color var(--dur-hover) var(--ease);
+}
+.sidebar-search-box:focus-within{ border-color:var(--accent-border); }
+.sidebar-search-box svg{ width:14px; height:14px; color:var(--text-muted); flex-shrink:0; }
+.sidebar-search-box input{
+  flex:1; border:none; outline:none; background:transparent;
+  color:var(--text-primary); font-size:var(--text-small); font-family:inherit;
+}
+.sidebar-search-box input::placeholder{ color:var(--text-muted); }
+
+.sidebar-scroll{ flex:1; overflow-y:auto; padding:var(--space-3) var(--space-2); }
+.sidebar-group{ margin-bottom:var(--space-3); }
+.sidebar-group-label{
+  font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--text-muted); padding:0 var(--space-2) 6px;
+}
+.faq-item{
+  width:100%; text-align:left; background:none; border:none; cursor:pointer;
+  font-family:inherit; display:flex; align-items:flex-start; gap:8px;
+  font-size:var(--text-small); color:var(--text-secondary);
+  padding:8px var(--space-2); border-radius:var(--radius-sidebar-item);
+  transition:background var(--dur-hover) var(--ease), color var(--dur-hover) var(--ease);
+  line-height:1.4;
+}
+.faq-item:hover{ background:var(--card); color:var(--text-primary); }
+.faq-item svg{ width:12px; height:12px; margin-top:3px; color:var(--accent-text); flex-shrink:0; }
+
+.sidebar-bottom{ padding:var(--space-2); border-top:1px solid var(--border); flex-shrink:0; }
+.quick-action-btn{
+  width:100%; display:flex; align-items:center; gap:var(--space-2);
+  background:none; border:none; color:var(--text-secondary);
+  font-size:var(--text-small); font-weight:500; text-align:left;
+  padding:8px 10px; border-radius:var(--radius-sidebar-item); cursor:pointer;
+  transition:background var(--dur-hover) var(--ease), color var(--dur-hover) var(--ease);
+}
+.quick-action-btn:hover{ background:var(--card); color:var(--text-primary); }
+.quick-action-btn svg{ width:16px; height:16px; flex-shrink:0; }
+
+.sidebar-overlay{
+  display:none; position:fixed; inset:0; top:var(--header-height); z-index:299;
+  background:rgba(0,0,0,.5);
+}
+.sidebar-overlay.active{ display:block; }
+
+/* ============================================================
+   6. HEADER
+   ============================================================ */
+header{
+  flex-shrink:0; height:var(--header-height);
+  display:flex; align-items:center; gap:var(--space-3);
+  padding:0 var(--space-4);
+  background:var(--surface); border-bottom:1px solid var(--border);
+  transition:background var(--dur-fade) var(--ease);
+}
+#sidebar-toggle{
+  display:none; background:none; border:1px solid var(--border);
+  color:var(--text-secondary); cursor:pointer; padding:7px;
+  border-radius:var(--radius-sidebar-item);
+  transition:background var(--dur-hover) var(--ease), color var(--dur-hover) var(--ease);
+}
+#sidebar-toggle:hover{ background:var(--card); color:var(--text-primary); }
+#sidebar-toggle svg{ width:18px; height:18px; display:block; }
+
+.logo-wrap{ display:flex; align-items:center; gap:var(--space-3); min-width:0; }
+.basf-mark{
+  background:var(--accent); color:#fff; border:1px solid var(--accent-strong);
+  border-radius:6px;
+  padding:3px 8px; font-size:12px; font-weight:800; letter-spacing:.06em;
+  flex-shrink:0;
+}
+[data-theme="light"] .basf-mark{ background:var(--accent); border-color:var(--accent-strong); color:#fff; }
+.header-divider{ width:1px; height:20px; background:var(--border); flex-shrink:0; }
+.header-title h1{
+  font-size:var(--text-small); font-weight:600; color:var(--text-primary);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+.header-right{ margin-left:auto; display:flex; align-items:center; gap:var(--space-2); }
+
+.theme-toggle{
+  background:var(--card); border:1px solid var(--border);
+  color:var(--text-secondary); cursor:pointer; padding:7px;
+  border-radius:var(--radius-sidebar-item);
+  display:flex; align-items:center; justify-content:center;
+  transition:background var(--dur-hover) var(--ease), color var(--dur-hover) var(--ease), border-color var(--dur-hover) var(--ease);
+}
+.theme-toggle:hover{ background:var(--accent-soft); color:var(--accent-text); border-color:var(--accent-border); }
+.theme-toggle svg{ width:16px; height:16px; }
+.theme-toggle .icon-sun{ display:none; }
+.theme-toggle .icon-moon{ display:block; }
+[data-theme="light"] .theme-toggle .icon-sun{ display:block; }
+[data-theme="light"] .theme-toggle .icon-moon{ display:none; }
+
+.status-pill{
+  flex-shrink:0;
+  display:flex; align-items:center; gap:6px;
+  background:var(--success-soft); border:1px solid rgba(46,155,93,.28);
+  color:var(--success); border-radius:var(--radius-pill);
+  padding:4px 12px; font-size:11px; font-weight:600; letter-spacing:.02em;
+}
+.status-dot{ width:6px; height:6px; border-radius:50%; background:var(--success); flex-shrink:0; }
+
+/* ============================================================
+   7. CHAT
+   ============================================================ */
+.message{ display:flex; gap:var(--space-3); animation:msgFadeIn var(--dur-fade) var(--ease); }
+@keyframes msgFadeIn{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
+.message.user{ flex-direction:row-reverse; align-self:flex-end; max-width:80%; }
+.message.bot{ align-self:flex-start; max-width:100%; flex-direction:column; }
+.bot-row{ display:flex; gap:var(--space-3); align-items:flex-start; }
+
+.avatar{
+  width:32px; height:32px; border-radius:var(--radius-sidebar-item);
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700; flex-shrink:0;
+}
+.message.user .avatar{ background:var(--card); border:1px solid var(--border); color:var(--text-secondary); }
+.message.bot .avatar{ background:#0B0B0B; color:#fff; border:1px solid var(--border-strong); }
+[data-theme="light"] .message.bot .avatar{ background:#111; border-color:#111; }
+
+.bubble{ font-size:var(--text-body); line-height:var(--leading); position:relative; word-break:break-word; }
+.message.user .bubble{
+  background:var(--card); border:1px solid var(--border); color:var(--text-primary);
+  padding:12px 16px; border-radius:18px; border-bottom-right-radius:4px;
+}
+.message.bot .bubble{
+  background:transparent; border:none; color:var(--text-primary);
+  padding:2px 0 0; flex:1;
+}
+
+.bubble h1,.bubble h2,.bubble h3{ color:var(--text-primary); margin:14px 0 6px; }
+.bubble h1{ font-size:19px; } .bubble h2{ font-size:16px; } .bubble h3{ font-size:15px; }
+.bubble p{ margin:6px 0; color:inherit; }
+.bubble ul,.bubble ol{ margin:6px 0 6px 20px; }
+.bubble li{ margin:3px 0; color:inherit; }
+.bubble strong{ font-weight:600; color:inherit; }
+.bubble a{ color:var(--accent-text); text-decoration:none; }
+.bubble a:hover{ text-decoration:underline; }
+.bubble hr{ border:none; border-top:1px solid var(--border); margin:10px 0; }
+.bubble code{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:4px; padding:1px 5px; font-family:var(--font-mono);
+  font-size:12.5px; color:var(--accent-text);
+}
+.bubble pre{
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-sidebar-item); padding:14px; overflow-x:auto; margin:8px 0;
+}
+.bubble pre code{ background:none; border:none; padding:0; font-size:12.5px; color:var(--text-secondary); }
+.bubble img{ max-width:100%; border-radius:var(--radius-sidebar-item); margin:8px 0; border:1px solid var(--border); }
+.bubble .attached-img{ max-width:260px; max-height:200px; border-radius:var(--radius-sidebar-item); margin-bottom:8px; }
+
+.feedback-row{ display:flex; align-items:center; gap:6px; padding-left:44px; margin-top:var(--space-2); }
+.feedback-label{ font-size:11px; color:var(--text-muted); margin-right:2px; }
+.feedback-btn{
+  background:transparent; border:1px solid var(--border); border-radius:999px;
+  padding:2px 6px; cursor:pointer; font-size:11px; line-height:1; font-weight:500;
+  display:inline-flex; align-items:center; gap:3px; color:var(--text-muted);
+  opacity:.75;
+  transition:background var(--dur-hover) var(--ease), color var(--dur-hover) var(--ease), border-color var(--dur-hover) var(--ease), opacity var(--dur-hover) var(--ease), transform var(--dur-press) var(--ease);
+}
+.feedback-btn:hover{ opacity:1; border-color:var(--border-strong); }
+.feedback-btn .fb-emoji{ font-size:12px; filter:grayscale(1); transition:filter var(--dur-hover) var(--ease), transform var(--dur-press) var(--ease); }
+.feedback-btn:hover .fb-emoji{ filter:grayscale(0); }
+.feedback-btn.active-up,
+.feedback-btn.active-down{ background:rgba(240,192,32,.14); border-color:rgba(240,192,32,.55); color:#F0C020; opacity:1; }
+.feedback-btn.active-up .fb-emoji,
+.feedback-btn.active-down .fb-emoji{ filter:none; transform:scale(1.08); }
+.feedback-btn .fb-count{ font-size:10px; font-weight:600; min-width:6px; }
+
+.copy-btn{
+  position:absolute; top:0; right:0;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:7px; padding:4px 9px; cursor:pointer;
+  font-size:11px; font-weight:500; color:var(--text-muted);
+  display:flex; align-items:center; gap:4px;
+  opacity:0; transition:opacity var(--dur-hover) var(--ease), background var(--dur-hover) var(--ease), color var(--dur-hover) var(--ease);
+}
+.copy-btn svg{ width:12px; height:12px; flex-shrink:0; }
+.message.bot .bubble:hover .copy-btn,
+.copy-btn:focus-visible{ opacity:1; }
+.copy-btn:hover{ background:var(--accent); color:#fff; border-color:var(--accent); }
+.copy-btn.copied{ background:var(--success); color:#fff; border-color:var(--success); }
+
+.sources,.related-links{
+  margin-top:var(--space-3); padding:12px 14px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-sidebar-item); font-size:var(--text-small);
+}
+.sources strong,.related-links strong{
+  display:block; margin-bottom:6px; font-size:11px;
+  letter-spacing:.05em; text-transform:uppercase; color:var(--text-muted);
+}
+.sources a,.related-links a{
+  color:var(--accent-text); text-decoration:none; display:block; margin:3px 0;
+}
+.related-links a{ word-break:break-all; }
+.sources a:hover,.related-links a:hover{ text-decoration:underline; }
+
+.wiki-badge{
+  display:inline-block; font-size:9.5px; font-weight:700;
+  padding:2px 7px; border-radius:var(--radius-pill); margin-left:5px; vertical-align:middle;
+}
+.wiki-badge.azure{ background:var(--accent-soft); color:var(--accent-text); }
+.wiki-badge.aws{ background:rgba(201,138,46,.14); color:var(--source-label); }
+.wiki-badge.other{ background:var(--card); border:1px solid var(--border); color:var(--text-secondary); }
+
+.cross-wiki-banner{
+  margin-top:var(--space-3); padding:10px 14px;
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sidebar-item);
+  font-size:var(--text-small); color:var(--text-secondary);
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+
+.typing .bubble{ display:flex; align-items:center; gap:6px; min-height:20px; }
+.dot{ width:6px; height:6px; border-radius:50%; background:var(--accent-text); animation:bounce 1.4s infinite; }
+.dot:nth-child(2){ animation-delay:.18s; opacity:.75; }
+.dot:nth-child(3){ animation-delay:.36s; opacity:.5; }
+@keyframes bounce{ 0%,60%,100%{ transform:translateY(0); opacity:.4; } 30%{ transform:translateY(-5px); opacity:1; } }
+
+.typewriter-cursor{
+  display:inline-block; width:2px; height:1em;
+  background:var(--accent-text); margin-left:2px;
+  vertical-align:text-bottom; animation:blink .7s step-end infinite;
+}
+@keyframes blink{ 0%,100%{ opacity:1; } 50%{ opacity:0; } }
+
+/* ============================================================
+   8. WELCOME
+   ============================================================ */
+.welcome{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; max-width:720px; margin:0 auto; padding:var(--space-6) var(--space-3) var(--space-4);
+}
+.welcome-brand{ display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2); }
+.welcome-mark{
+  background:var(--accent); color:#fff; border:1px solid var(--accent-strong); border-radius:6px;
+  padding:3px 9px; font-size:13px; font-weight:800; letter-spacing:.06em;
+}
+[data-theme="light"] .welcome-mark{ background:var(--accent); border-color:var(--accent-strong); color:#fff; }
+.welcome-brand-text{ font-size:var(--text-h3); font-weight:700; color:var(--text-primary); }
+.welcome-powered{ font-size:var(--text-small); color:var(--text-muted); margin-bottom:var(--space-6); }
+
+.welcome-greeting h2{ font-size:var(--text-h1); margin-bottom:var(--space-2); }
+.welcome-greeting p{ font-size:var(--text-body); color:var(--text-secondary); margin-bottom:var(--space-5); }
+
+.chips{ display:flex; flex-wrap:wrap; gap:var(--space-2); justify-content:center; margin-bottom:var(--space-5); }
+.chip{
+  background:var(--card); border:1px solid var(--border); color:var(--text-secondary);
+  padding:9px 16px; border-radius:var(--radius-pill);
+  font-size:var(--text-small); font-weight:500; cursor:pointer;
+  transition:border-color var(--dur-hover) var(--ease), color var(--dur-hover) var(--ease), transform var(--dur-hover) var(--ease);
+}
+.chip:hover{ border-color:var(--accent-border); color:var(--accent-text); transform:translateY(-1px); }
+.chip:active{ transform:translateY(0); }
+
+/* Quick Suggestions card grid */
+.quick-suggestions{ width:100%; text-align:left; margin-top:var(--space-4); }
+.quick-suggestions-label{
+  font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--text-muted); margin-bottom:var(--space-3); padding-left:2px;
+}
+.suggestions-grid{
+  display:grid; grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:var(--space-3);
+}
+.suggestion-card{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-card); padding:14px 18px;
+  color:var(--text-primary); font-size:var(--text-body); font-weight:500;
+  text-align:left; cursor:pointer; font-family:inherit;
+  transition:border-color var(--dur-card) var(--ease), background var(--dur-card) var(--ease), transform var(--dur-press) var(--ease);
+}
+.suggestion-card:hover{
+  border-color:var(--accent-border); background:var(--card-hover);
+  color:var(--accent-text);
+}
+.suggestion-card:active{ transform:translateY(1px); }
+@media (max-width:560px){ .suggestions-grid{ grid-template-columns:1fr; } }
+
+/* ============================================================
+   9. INPUT
+   ============================================================ */
+.input-section{ flex-shrink:0; padding:var(--space-2) var(--space-4) var(--space-3); background:var(--bg); }
+.input-inner{ max-width:var(--content-max); margin:0 auto; }
+
+#img-preview-strip{ display:none; gap:var(--space-2); flex-wrap:wrap; margin-bottom:var(--space-2); }
+.img-thumb-wrap{ position:relative; display:inline-block; }
+.img-thumb-wrap img{ width:52px; height:52px; object-fit:cover; border-radius:var(--radius-sidebar-item); border:1px solid var(--border); }
+.img-thumb-wrap .remove-img{
+  position:absolute; top:-6px; right:-6px;
+  background:var(--danger); color:#fff; border:none; border-radius:50%;
+  width:18px; height:18px; font-size:10px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+
+.input-box{
+  background:var(--surface); border:1px solid var(--border-strong);
+  border-radius:var(--radius-input); padding:10px 12px 10px 16px;
+  display:flex; gap:var(--space-2); align-items:flex-end;
+  transition:border-color var(--dur-hover) var(--ease);
+}
+.input-box:focus-within{ border-color:var(--accent-border); }
+
+#attach-btn{
+  background:none; border:none; color:var(--text-muted); cursor:pointer;
+  padding:8px; border-radius:var(--radius-sidebar-item); flex-shrink:0;
+  display:flex; align-items:center;
+  transition:color var(--dur-hover) var(--ease), background var(--dur-hover) var(--ease);
+}
+#attach-btn:hover{ color:var(--accent-text); background:var(--accent-soft); }
+#attach-btn svg{ width:18px; height:18px; }
+#file-input{ display:none; }
+
+#user-input{
+  flex:1; border:none; outline:none; resize:none; max-height:140px;
+  font-family:inherit; font-size:var(--text-body); color:var(--text-primary);
+  background:transparent; line-height:var(--leading); padding:5px 0;
+}
+#user-input::placeholder{ color:var(--text-muted); }
+
+.input-footer-row{ display:flex; align-items:center; padding:6px 2px 0; }
+.input-footer-hint{ font-size:11px; color:var(--text-muted); }
+
+/* ============================================================
+   10. BUTTONS
+   ============================================================ */
+#send-btn{
+  background:#0B0B0B; color:#fff; border:1px solid var(--border-strong);
+  border-radius:var(--radius-button); width:40px; height:40px; cursor:pointer;
+  flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  transition:background var(--dur-hover) var(--ease), transform var(--dur-press) var(--ease);
+}
+[data-theme="light"] #send-btn{ background:#111; border-color:#111; }
+#send-btn:hover:not(:disabled){ background:#000; }
+#send-btn:active:not(:disabled){ transform:scale(.97); }
+#send-btn:disabled{ background:var(--card); color:var(--text-muted); cursor:not-allowed; border-color:var(--border); }
+#send-btn svg{ width:17px; height:17px; }
+
+footer{
+  flex-shrink:0; text-align:center; font-size:11px; color:var(--text-muted);
+  padding:8px 12px; border-top:1px solid var(--border); background:var(--surface);
+}
+
+/* ============================================================
+   11. FEEDBACK POPUP (bottom-right)
+   ============================================================ */
+.fb-fab{
+  position:fixed; right:22px; bottom:64px; z-index:400;
+  width:52px; height:52px; border-radius:50%; border:1px solid var(--border-strong); cursor:pointer;
+  background:#0B0B0B; color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:var(--shadow-lg);
+  transition:background var(--dur-hover) var(--ease), transform var(--dur-press) var(--ease);
+}
+[data-theme="light"] .fb-fab{ background:#111; border-color:#111; }
+.fb-fab:hover{ background:#000; transform:translateY(-2px); }
+.fb-fab svg{ width:22px; height:22px; }
+
+.fb-popup{
+  position:fixed; right:22px; bottom:130px; z-index:401;
+  width:320px; max-width:calc(100vw - 44px);
+  background:var(--surface); border:1px solid var(--border-strong);
+  border-radius:var(--radius-card); box-shadow:var(--shadow-lg);
+  padding:var(--space-4);
+  transform-origin:bottom right;
+  transform:scale(.94) translateY(8px); opacity:0; pointer-events:none;
+  transition:opacity var(--dur-fade) var(--ease), transform var(--dur-fade) var(--ease);
+}
+.fb-popup.open{ opacity:1; transform:scale(1) translateY(0); pointer-events:auto; }
+.fb-popup-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.fb-popup-title{ font-size:15px; font-weight:600; color:var(--text-primary); }
+.fb-close{
+  background:none; border:none; cursor:pointer; color:var(--text-muted);
+  padding:4px; border-radius:6px; display:flex;
+}
+.fb-close:hover{ color:var(--text-primary); background:var(--card); }
+.fb-close svg{ width:14px; height:14px; }
+.fb-popup-sub{ font-size:12px; color:var(--text-muted); margin-bottom:var(--space-3); }
+.fb-popup-sub a{ color:var(--accent-text); text-decoration:none; }
+.fb-popup-sub a:hover{ text-decoration:underline; }
+.fb-textarea{
+  width:100%; min-height:100px; resize:vertical;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-sidebar-item); padding:10px 12px;
+  color:var(--text-primary); font-family:inherit; font-size:var(--text-small);
+  outline:none; transition:border-color var(--dur-hover) var(--ease);
+}
+.fb-textarea:focus{ border-color:var(--accent-border); }
+.fb-actions{ display:flex; justify-content:flex-end; gap:var(--space-2); margin-top:var(--space-3); }
+.fb-btn{
+  border:1px solid var(--border); background:var(--card); color:var(--text-secondary);
+  border-radius:var(--radius-button); padding:8px 14px; font-size:12px; font-weight:600;
+  cursor:pointer; font-family:inherit;
+  transition:background var(--dur-hover) var(--ease), color var(--dur-hover) var(--ease);
+}
+.fb-btn:hover{ background:var(--card-hover); color:var(--text-primary); }
+.fb-btn.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+.fb-btn.primary:hover{ background:var(--accent-strong); border-color:var(--accent-strong); color:#fff; }
+
+/* ============================================================
+   12. RESPONSIVE
+   ============================================================ */
+@media (max-width:768px){
+  #sidebar-toggle{ display:flex; }
+  .sidebar{
+    position:fixed; top:var(--header-height); left:0;
+    height:calc(100vh - var(--header-height)); z-index:300;
+    transform:translateX(-100%); width:var(--sidebar-width) !important;
+    box-shadow:var(--shadow-lg);
+  }
+  .sidebar.open{ transform:translateX(0); }
+  .chat-wrapper{ padding:var(--space-4) var(--space-3) var(--space-2); }
+  .input-section{ padding:var(--space-2) var(--space-3) var(--space-3); }
+  .message.user{ max-width:90%; }
+  .input-footer-row{ display:none; }
+  .feedback-row{ padding-left:0; }
+  .status-pill span:last-child{ display:none; }
+  .fb-fab{ right:14px; bottom:56px; }
+  .fb-popup{ right:14px; bottom:120px; }
+}
+@media (max-width:480px){
+  header{ padding:0 var(--space-3); gap:var(--space-2); }
+  .welcome-greeting h2{ font-size:26px; }
+}
+
+/* ============================================================
+   13. ACCESSIBILITY
+   ============================================================ */
+.sr-only{
+  position:absolute; width:1px; height:1px; overflow:hidden;
+  clip:rect(0,0,0,0); white-space:nowrap; border:0; padding:0; margin:-1px;
+}
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
+  outline:2px solid var(--accent-text); outline-offset:2px; border-radius:var(--radius-sidebar-item);
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important; animation-iteration-count:1 !important;
+    transition-duration:.001ms !important; scroll-behavior:auto !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<header>
+  <button id="sidebar-toggle" aria-label="Toggle sidebar" aria-expanded="false" aria-controls="sidebar" onclick="toggleSidebar()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <div class="logo-wrap">
+    <span class="basf-mark" aria-hidden="true">BASF</span>
+    <span class="header-divider"></span>
+    <div class="header-title"><h1>Wiki Assistant</h1></div>
+  </div>
+
+  <div class="header-right">
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle light / dark theme" onclick="toggleTheme()">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+      </svg>
+    </button>
+    <div class="status-pill" role="status">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span>Online</span>
+    </div>
+  </div>
+</header>
+
+<div class="app-shell">
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Chat navigation">
+    <div class="sidebar-top">
+      <button class="new-chat-btn" onclick="newChat()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New chat
+      </button>
+      <div class="sidebar-search">
+        <div class="sidebar-search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" placeholder="Search FAQs" aria-label="Search FAQs" oninput="filterFaqs(this.value)"/>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-scroll" aria-label="Frequently asked questions" id="faq-nav">
+      <div class="sidebar-group">
+        <p class="sidebar-group-label">Frequently Asked Questions</p>
+        <!-- FAQs are populated below; each is interactive and submits into chat -->
+      </div>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <button class="quick-action-btn" onclick="clearChat()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+        </svg>
+        Clear conversation
+      </button>
+    </div>
+  </aside>
+
+  <main class="content-area" id="main">
+    <div class="chat-wrapper" id="chat-wrapper">
+      <div id="chat-box" aria-live="polite"></div>
+    </div>
+    <div class="input-section">
+      <div class="input-inner">
+        <div id="img-preview-strip"></div>
+        <div class="input-box">
+          <button id="attach-btn" title="Attach image" aria-label="Attach image" onclick="document.getElementById('file-input').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+          </button>
+          <input id="file-input" type="file" accept="image/*" multiple onchange="handleFileSelect(event)"/>
+          <textarea id="user-input" rows="1" placeholder="Ask a question about the BASF Wiki..." aria-label="Chat input" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button id="send-btn" onclick="sendMessage()" title="Send" aria-label="Send message">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-footer-row">
+          <span class="input-footer-hint">Press <kbd>Enter</kbd> to send &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for new line</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer>
+  © 2026 BASF SE &nbsp;·&nbsp; Powered by Azure OpenAI &amp; Azure AI Search &nbsp;·&nbsp; AP Cloud Platform
+</footer>
+
+<!-- Feedback FAB + popup -->
+<button class="fb-fab" id="fb-fab" aria-label="Send feedback" title="Send feedback" onclick="toggleFeedback()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+</button>
+<div class="fb-popup" id="fb-popup" role="dialog" aria-labelledby="fb-title" aria-hidden="true">
+  <div class="fb-popup-head">
+    <span class="fb-popup-title" id="fb-title">Send feedback</span>
+    <button class="fb-close" aria-label="Close feedback" onclick="toggleFeedback(false)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <p class="fb-popup-sub">Your message will be emailed to <a href="mailto:ap-cloud-platform.basf.com">ap-cloud-platform.basf.com</a></p>
+  <textarea class="fb-textarea" id="fb-message" placeholder="Tell us what's working, what's not, or what you'd like to see..."></textarea>
+  <div class="fb-actions">
+    <button class="fb-btn" onclick="toggleFeedback(false)">Cancel</button>
+    <button class="fb-btn primary" onclick="submitFeedback()">Send email</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ STATE ══════════════════ */
+const chatWrapper = document.getElementById("chat-wrapper");
+const chatBox     = document.getElementById("chat-box");
+const input       = document.getElementById("user-input");
+const sendBtn     = document.getElementById("send-btn");
+const strip       = document.getElementById("img-preview-strip");
+
+let history       = [];
+let pendingImages = [];
+
+/* ══════════════════ THEME ══════════════════ */
+(function initTheme(){
+  const saved = localStorage.getItem("basf-theme");
+  if (saved === "light" || saved === "dark") {
+    document.documentElement.setAttribute("data-theme", saved);
+  }
+})();
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute("data-theme") || "dark";
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  try { localStorage.setItem("basf-theme", next); } catch(e){}
+}
+
+/* ══════════════════ FAQs (sidebar — frequently asked, interactive) ══════════════════ */
+const FAQS = [
+  "How do I request access to the AP Cloud Platform?",
+  "What are the SOPs for provisioning a new Azure subscription?",
+  "How do I set up an Azure Pipeline for my project?",
+  "How do I create an App Registration in Azure AD?",
+  "How do I request a new Storage Account?",
+  "How does the Terraform module registry work?",
+  "Who do I contact for AP Cloud Platform support?",
+  "What is the onboarding process for new team members?",
+  "How do I deploy an Azure Function App?",
+  "What are the architecture guidelines for new applications?"
+];
+
+function renderFaqs(list){
+  const nav = document.getElementById("faq-nav");
+  const group = nav.querySelector(".sidebar-group");
+  // Keep the label, remove old items
+  const label = group.querySelector(".sidebar-group-label");
+  group.innerHTML = "";
+  group.appendChild(label);
+  if (list.length === 0){
+    const empty = document.createElement("div");
+    empty.className = "faq-item"; empty.style.cursor = "default";
+    empty.textContent = "No matching questions";
+    group.appendChild(empty);
+    return;
+  }
+  list.forEach(q => {
+    const btn = document.createElement("button");
+    btn.className = "faq-item"; btn.type = "button";
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      <span>${q}</span>`;
+    btn.addEventListener("click", () => {
+      input.value = q;
+      sendMessage();
+      if (window.innerWidth < 768) closeSidebar();
+    });
+    group.appendChild(btn);
+  });
+}
+renderFaqs(FAQS);
+
+function filterFaqs(term){
+  const t = term.trim().toLowerCase();
+  if (!t) return renderFaqs(FAQS);
+  renderFaqs(FAQS.filter(q => q.toLowerCase().includes(t)));
+}
+
+/* ══════════════════ WELCOME CARD ══════════════════ */
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 5)  return "Good Night";
+  if (h < 12) return "Good Morning";
+  if (h < 17) return "Good Afternoon";
+  if (h < 21) return "Good Evening";
+  return "Good Night";
+}
+
+const WELCOME_HTML = `
+  <div class="welcome" id="welcome-card">
+    <div class="welcome-brand">
+      <span class="welcome-mark" aria-hidden="true">BASF</span>
+      <span class="welcome-brand-text">Wiki Assistant</span>
+    </div>
+    <p class="welcome-powered">Powered by Azure OpenAI · AP Cloud Platform</p>
+    <div class="welcome-greeting">
+      <h2 id="welcome-greeting">Good Morning</h2>
+      <p>How can I help you today?</p>
+    </div>
+    <div class="chips" role="group" aria-label="Suggested topics">
+      <button type="button" class="chip" data-query="AP Cloud Platform Standard Operating Procedures" onclick="sendSuggestion(this)"><span>SOP</span></button>
+      <button type="button" class="chip" data-query="Products &amp; Applications" onclick="sendSuggestion(this)"><span>Applications</span></button>
+      <button type="button" class="chip" data-query="AP Cloud Platform Team contacts &amp; roles" onclick="sendSuggestion(this)"><span>Contacts</span></button>
+      <button type="button" class="chip" data-query="AP Cloud Platform Architecture Overview" onclick="sendSuggestion(this)"><span>Architecture</span></button>
+      <button type="button" class="chip" data-query="BASF Onboarding Process" onclick="sendSuggestion(this)"><span>Onboarding</span></button>
+    </div>
+  </div>`;
+
+
+function renderWelcome() {
+  chatBox.innerHTML = WELCOME_HTML;
+  const g = document.getElementById("welcome-greeting");
+  if (g) g.textContent = getGreeting();
+}
+renderWelcome();
+
+/* ══════════════════ SIDEBAR ══════════════════ */
+function toggleSidebar() {
+  const sb = document.getElementById("sidebar");
+  const ov = document.getElementById("sidebar-overlay");
+  const btn = document.getElementById("sidebar-toggle");
+  const open = sb.classList.contains("open");
+  sb.classList.toggle("open", !open);
+  ov.classList.toggle("active", !open);
+  btn.setAttribute("aria-expanded", String(!open));
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebar-overlay").classList.remove("active");
+  document.getElementById("sidebar-toggle").setAttribute("aria-expanded", "false");
+}
+
+/* ══════════════════ NEW / CLEAR ══════════════════ */
+function newChat() {
+  history = []; pendingImages = []; renderImageStrip();
+  renderWelcome(); input.value = ""; input.style.height = "auto"; input.focus();
+  if (window.innerWidth < 768) closeSidebar();
+}
+function clearChat() { newChat(); }
+
+/* ══════════════════ INPUT HELPERS ══════════════════ */
+function autoResize(el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 140) + "px"; }
+function handleKey(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function sendSuggestion(el) {
+  const query = el.dataset.query || (el.querySelector("span")?.textContent || el.textContent).trim();
+  input.value = query;
+  sendMessage();
+}
+
+/* ══════════════════ IMAGE ATTACH ══════════════════ */
+function handleFileSelect(event) {
+  Array.from(event.target.files).forEach(file => {
+    const r = new FileReader();
+    r.onload = e => { pendingImages.push({ dataUrl: e.target.result }); renderImageStrip(); };
+    r.readAsDataURL(file);
+  });
+  event.target.value = "";
+}
+function renderImageStrip() {
+  strip.innerHTML = "";
+  strip.style.display = pendingImages.length ? "flex" : "none";
+  pendingImages.forEach((img, idx) => {
+    const w = document.createElement("div"); w.className = "img-thumb-wrap";
+    w.innerHTML = `<img src="${img.dataUrl}" alt="attached"/>
+      <button class="remove-img" onclick="removeImage(${idx})" aria-label="Remove">✕</button>`;
+    strip.appendChild(w);
+  });
+}
+function removeImage(idx) { pendingImages.splice(idx, 1); renderImageStrip(); }
+
+/* ══════════════════ MARKDOWN ══════════════════ */
+marked.setOptions({ breaks: true, gfm: true });
+function preprocessMarkdown(text) { return text.replace(/(\w)_(\w)/g, (m,a,b) => `${a}\\_${b}`); }
+function renderMarkdown(text) {
+  try { return marked.parse(preprocessMarkdown(text)); }
+  catch { return text.replace(/\n/g, "<br>"); }
+}
+
+/* ══════════════════ WIKI BADGE ══════════════════ */
+function getBadgeClass(s) {
+  if (!s) return "other";
+  const l = s.toLowerCase();
+  return l.includes("azure") ? "azure" : l.includes("aws") ? "aws" : "other";
+}
+
+/* ══════════════════ COPY BUTTON ══════════════════ */
+function makeCopyButton(rawText) {
+  const btn = document.createElement("button");
+  btn.className = "copy-btn"; btn.title = "Copy"; btn.setAttribute("aria-label","Copy response");
+  const iCopy  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+  const iCheck = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  btn.innerHTML = iCopy + "Copy";
+  btn.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(rawText); }
+    catch { const ta=document.createElement("textarea"); ta.value=rawText; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }
+    btn.classList.add("copied"); btn.innerHTML = iCheck + "Copied!";
+    setTimeout(() => { btn.classList.remove("copied"); btn.innerHTML = iCopy + "Copy"; }, 2200);
+  });
+  return btn;
+}
+
+/* ══════════════════ FEEDBACK — Yes / No ══════════════════ */
+function makeFeedbackRow(msgId) {
+  const row = document.createElement("div");
+  row.className = "feedback-row";
+
+  const label = document.createElement("span");
+  label.className = "feedback-label";
+  label.textContent = "Was this helpful?";
+  row.appendChild(label);
+
+  const yesBtn = document.createElement("button");
+  const noBtn  = document.createElement("button");
+  yesBtn.className = "feedback-btn";
+  noBtn.className  = "feedback-btn";
+
+  yesBtn.setAttribute("aria-label","Helpful");
+  noBtn.setAttribute("aria-label","Not helpful");
+  yesBtn.title = "Helpful";
+  noBtn.title  = "Not helpful";
+  yesBtn.innerHTML = `<span class="fb-emoji" aria-hidden="true">👍</span><span class="fb-count"></span>`;
+  noBtn.innerHTML  = `<span class="fb-emoji" aria-hidden="true">👎</span><span class="fb-count"></span>`;
+
+  let voted = null, yCount = 0, nCount = 0;
+
+  yesBtn.addEventListener("click", () => {
+    if (voted === "yes") { yCount = Math.max(0, yCount - 1); voted = null; yesBtn.classList.remove("active-up"); }
+    else {
+      if (voted === "no") { nCount = Math.max(0, nCount - 1); noBtn.classList.remove("active-down"); }
+      yCount++; voted = "yes"; yesBtn.classList.add("active-up");
+    }
+    yesBtn.querySelector(".fb-count").textContent = yCount > 0 ? yCount : "";
+    noBtn.querySelector(".fb-count").textContent  = nCount > 0 ? nCount : "";
+  });
+
+  noBtn.addEventListener("click", () => {
+    if (voted === "no") { nCount = Math.max(0, nCount - 1); voted = null; noBtn.classList.remove("active-down"); }
+    else {
+      if (voted === "yes") { yCount = Math.max(0, yCount - 1); yesBtn.classList.remove("active-up"); }
+      nCount++; voted = "no"; noBtn.classList.add("active-down");
+    }
+    yesBtn.querySelector(".fb-count").textContent = yCount > 0 ? yCount : "";
+    noBtn.querySelector(".fb-count").textContent  = nCount > 0 ? nCount : "";
+  });
+
+  row.appendChild(yesBtn);
+  row.appendChild(noBtn);
+  return row;
+}
+
+/* ══════════════════ TYPEWRITER ══════════════════ */
+function typewriterEffect(bubble, rawText, sources, relatedLinks, wikiSources, onComplete) {
+  const contentDiv = document.createElement("div");
+  bubble.appendChild(contentDiv);
+  const cursor = document.createElement("span");
+  cursor.className = "typewriter-cursor";
+  bubble.appendChild(cursor);
+
+  const tokens = rawText.match(/(\S+|\s+)/g) || [];
+  let idx = 0, current = "";
+  const TICK = 22, BATCH = 3;
+
+  const timer = setInterval(() => {
+    const end = Math.min(idx + BATCH, tokens.length);
+    for (; idx < end; idx++) current += tokens[idx];
+    contentDiv.textContent = current;
+    chatWrapper.scrollTop = chatWrapper.scrollHeight;
+
+    if (idx >= tokens.length) {
+      clearInterval(timer);
+      cursor.remove();
+      contentDiv.innerHTML = renderMarkdown(rawText);
+
+      if (wikiSources && wikiSources.length > 1) {
+        const b = document.createElement("div"); b.className = "cross-wiki-banner";
+        b.innerHTML = `🔄 <strong>Cross-Wiki Results</strong>: ` +
+          wikiSources.map(s => `<span class="wiki-badge ${getBadgeClass(s)}">${s}</span>`).join(" + ");
+        bubble.appendChild(b);
+      }
+      if (sources && sources.length > 0) {
+        const src = document.createElement("div"); src.className = "sources";
+        src.innerHTML = `<strong>📄 Sources</strong>` +
+          sources.map(s => {
+            const badge = s.wikiSource ? `<span class="wiki-badge ${getBadgeClass(s.wikiSource)}">${s.wikiSource}</span>` : "";
+            return `<a href="${s.url||"#"}" target="_blank" rel="noopener">↗ ${s.title}${badge}</a>`;
+          }).join("");
+        bubble.appendChild(src);
+      }
+      if (relatedLinks && relatedLinks.length > 0) {
+        const rl = document.createElement("div"); rl.className = "related-links";
+        rl.innerHTML = `<strong>🔗 Related Links from Wiki</strong>` +
+          relatedLinks.slice(0,12).map(l =>
+            `<a href="${l.url}" target="_blank" rel="noopener" title="${l.url}">↗ ${l.text||l.url}</a>`
+          ).join("");
+        bubble.appendChild(rl);
+      }
+      chatWrapper.scrollTop = chatWrapper.scrollHeight;
+      if (onComplete) onComplete();
+    }
+  }, TICK);
+}
+
+/* ══════════════════ APPEND MESSAGES ══════════════════ */
+let msgCounter = 0;
+
+function appendMessage(role, content, sources, attachedImages, relatedLinks, wikiSources) {
+  const welcome = document.getElementById("welcome-card");
+  if (welcome) welcome.remove();
+
+  const msgId = ++msgCounter;
+  const msg   = document.createElement("div");
+  msg.className = `message ${role}`;
+  msg.dataset.msgId = msgId;
+
+  const avatar = document.createElement("div");
+  avatar.className   = "avatar";
+  avatar.textContent = role === "user" ? "U" : "AI";
+  avatar.setAttribute("aria-hidden","true");
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+
+  if (role === "user") {
+    if (attachedImages && attachedImages.length > 0) {
+      attachedImages.forEach(img => {
+        const el = document.createElement("img");
+        el.src = img.dataUrl; el.className = "attached-img"; el.alt = "Attached";
+        bubble.appendChild(el);
+      });
+    }
+    const p = document.createElement("p");
+    p.textContent = content;
+    bubble.appendChild(p);
+    msg.appendChild(avatar);
+    msg.appendChild(bubble);
+  } else {
+    bubble.appendChild(makeCopyButton(content));
+    typewriterEffect(bubble, content, sources, relatedLinks, wikiSources, null);
+    const row = document.createElement("div");
+    row.className = "bot-row";
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    msg.appendChild(row);
+    msg.appendChild(makeFeedbackRow(msgId));
+  }
+
+  chatBox.appendChild(msg);
+  chatWrapper.scrollTop = chatWrapper.scrollHeight;
+  return msg;
+}
+
+/* ══════════════════ TYPING INDICATOR ══════════════════ */
+function showTyping() {
+  const msg = document.createElement("div");
+  msg.className = "message bot typing"; msg.id = "typing";
+  msg.innerHTML = `
+    <div class="bot-row">
+      <div class="avatar" aria-hidden="true">AI</div>
+      <div class="bubble">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>`;
+  chatBox.appendChild(msg);
+  chatWrapper.scrollTop = chatWrapper.scrollHeight;
+}
+function removeTyping() { const t = document.getElementById("typing"); if (t) t.remove(); }
+
+/* ══════════════════ SEND MESSAGE — original logic preserved ══════════════════ */
+async function sendMessage() {
+  const text        = input.value.trim();
+  const imgSnapshot = [...pendingImages];
+  if (!text && imgSnapshot.length === 0) return;
+
+  input.value = ""; input.style.height = "auto";
+  pendingImages = []; renderImageStrip();
+  sendBtn.disabled = true;
+
+  appendMessage("user", text || "(image attached)", null, imgSnapshot);
+  history.push({ role: "user", content: text || "(image attached)" });
+  showTyping();
+
+  try {
+    const resp = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: text,
+        history: history.slice(-12),
+        images:  imgSnapshot.map(i => i.dataUrl),
+      }),
+    });
+    const data = await resp.json();
+    removeTyping();
+    if (data.error) {
+      appendMessage("bot", `⚠️ ${data.error}`);
+    } else {
+      appendMessage("bot", data.answer, data.sources, null, data.related_links, data.wiki_sources);
+      history.push({ role: "assistant", content: data.answer });
+    }
+  } catch (err) {
+    removeTyping();
+    appendMessage("bot", "⚠️ Connection error. Please try again.");
+  }
+
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+/* ══════════════════ FEEDBACK POPUP (bottom-right) ══════════════════ */
+function toggleFeedback(force){
+  const pop = document.getElementById("fb-popup");
+  const willOpen = typeof force === "boolean" ? force : !pop.classList.contains("open");
+  pop.classList.toggle("open", willOpen);
+  pop.setAttribute("aria-hidden", String(!willOpen));
+  if (willOpen) setTimeout(() => document.getElementById("fb-message").focus(), 120);
+}
+function submitFeedback(){
+  const body = document.getElementById("fb-message").value.trim();
+  const subject = encodeURIComponent("BASF Wiki Assistant — Feedback");
+  const mailBody = encodeURIComponent(body || "");
+  // Note: address per user instruction (may need correcting to @ format for real mailing).
+  window.location.href = `mailto:ap-cloud-platform.basf.com?subject=${subject}&body=${mailBody}`;
+  toggleFeedback(false);
+}
+</script>
+</body>
+</html>
